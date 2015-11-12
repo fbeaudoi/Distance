@@ -38,6 +38,7 @@ class Distance {
             }
             while( ! ligneLue.equals( "%%%" ) ) {
                 resultat.append( ligneLue );
+                resultat.append( '\n' );
                 ligneLue = br.readLine();
             }
         } catch(IOException io) {
