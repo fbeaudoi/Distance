@@ -19,7 +19,7 @@ def distance_seq( ch1, ch2 )
   ((1..n1)*(1..n2)).each do |i, j|
     d[i, j] = [ d[i-1, j] + 1,
                 d[i, j-1] + 1,
-                d[i-1, j-1] + cout_subst( ch1[i], ch2[j] )
+                d[i-1, j-1] + cout_subst( ch1[i-1], ch2[j-1] )
               ].min
   end
 
