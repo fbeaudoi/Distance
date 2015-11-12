@@ -17,7 +17,7 @@ METHODES=[1, 2]
 def temps_moyen( donnees, methode, nb_threads, nb_fois )
   temps = 0.0
   nb_fois.times do
-    res =  `cat Benchmarks/#{donnees} | java Distance #{methode} #{nb_threads} 0`
+    res =  `cat Benchmarks/#{donnees}.donnees | java Distance #{methode} #{nb_threads} 0`
     temps += res.chomp.to_f
   end
   temps = temps / nb_fois
