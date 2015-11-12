@@ -47,13 +47,47 @@ class Distance {
         return resultat.toString();
     }
 
+    
+    
+    /*
+     * Test l'egalite de deux caracteres
+     * Retourne 0 si les deux caracteres sont egaux, 1 sinon.
+     */
+    public static int egalite(char c1, char c2)
+    {
+        if (c1 == c2) return 0;
+        return 1;
+    }
 
+    
     //-------------------------------------------
     // Version sequentielle
     //-------------------------------------------
 
     public static int distanceSeq( String chaine1, String chaine2 ) {
-        return 0;
+        
+        int size1 = chaine1.length();
+        int size2 = chaine2.length();
+        int matrice[][] = new int[size1+1][size2+1];
+        
+        // cas de base
+        matrice[0][0] = 0;
+        for (int i = 1 ; i <= size1 ; ++i)
+            matrice[i][0] = i;
+        for (int j = 1 ; j <= size2 ; ++j)
+            matrice[0][j] = j;
+        
+        // cas recursif
+        for (int i = 1 ; i <= size1 ; ++i)
+        {
+            for (int j = 1 ; j <= size2 ; ++j)
+            {
+                matrice[i][j] = Math.min (matrice[i-1][j] + 1, Math.min (
+                        matrice[i][j-1] + 1,
+                        matrice[i-1][j-1] + egalite(chaine1.charAt(i-1), chaine2.charAt(j-1))));           
+            }
+        }
+        return matrice[size1][size2];
     }
     
     public static void methodeSeq() {
