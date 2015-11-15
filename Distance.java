@@ -54,7 +54,7 @@ class Distance {
      * Test l'egalite de deux caracteres
      * Retourne 0 si les deux caracteres sont egaux, 1 sinon.
      */
-    public static int egalite(char c1, char c2)
+    public static int cout_subst(char c1, char c2)
     {
         if (c1 == c2) return 0;
         return 1;
@@ -83,9 +83,8 @@ class Distance {
         {
             for (int j = 1 ; j <= size2 ; ++j)
             {
-                matrice[i][j] = Math.min (matrice[i-1][j] + 1, Math.min (
-                        matrice[i][j-1] + 1,
-                        matrice[i-1][j-1] + egalite(chaine1.charAt(i-1), chaine2.charAt(j-1))));           
+                matrice[i][j] = Math.min (matrice[i-1][j] + 1, Math.min (matrice[i][j-1] + 1,
+                        matrice[i-1][j-1] + cout_subst(chaine1.charAt(i-1), chaine2.charAt(j-1))));           
             }
         }
         return matrice[size1][size2];
@@ -112,6 +111,15 @@ class Distance {
     }
     
     public static void methodePar1( int nbThreads ) {
+        String chaine1, chaine2;
+        
+        while ( (chaine1 = lireChaine()) != null ) {
+            chaine2 = lireChaine();
+            int distance = distancePar1(chaine1, chaine2);
+            if ( !benchmarks ) {
+                System.out.println( distance );
+            }
+        }
     }
     
     //-------------------------------------------
@@ -123,6 +131,15 @@ class Distance {
     }
 
     public static void methodePar2( int nbThreads ) {
+        String chaine1, chaine2;
+        
+        while ( (chaine1 = lireChaine()) != null ) {
+            chaine2 = lireChaine();
+            int distance = distancePar2(chaine1, chaine2);
+            if ( !benchmarks ) {
+                System.out.println( distance );
+            }
+        }
     }
     
     
