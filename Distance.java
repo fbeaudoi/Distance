@@ -1,6 +1,7 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.concurrent.*;
 
 class Distance {
     
@@ -61,7 +62,7 @@ class Distance {
     }
     
     /*
-    * Retourne la valeur minimale de trois valeur
+    * Retourne la valeur minimale de trois valeurs
     */
     private static int minimum(int a, int b, int c)
     {
@@ -103,29 +104,29 @@ class Distance {
         int size1 = chaine1.length();
         int size2 = chaine2.length();
         
-        int diag1[] = new int[size1 + 1];
-        int diag2[] = new int[size1 + 1];
+        int[] col1 = new int[size1 + 1];
+        int[] col2 = new int[size1 + 1];
         int temp[] = null;
         
         for (int i = 0 ; i <= size1 ; ++i)
-            diag1[i] = i;
+            col1[i] = i;
         
         for (int i = 1 ; i <= size2 ; ++i)
         {
-            diag2[0] = i;
+            col2[0] = i;
             
             for (int j = 1 ; j <= size1 ; ++j)
             {
-                diag2[j] = minimum(diag2[j-1]+1, diag1[j]+1, diag1[j-1] + 
+                col2[j] = minimum(col2[j-1]+1, col1[j]+1, col1[j-1] + 
                         cout_subst(chaine1.charAt(j-1), chaine2.charAt(i-1)));
             }
             
-            temp = diag1;
-            diag1 = diag2;
-            diag2 = temp;
+            temp = col1;
+            col1 = col2;
+            col2 = temp;
         }
         
-        return diag1[size1];  
+        return col1[size1];  
     }
     
     public static void methodeSeq() {
@@ -143,9 +144,78 @@ class Distance {
     //-------------------------------------------
     // Premiere version parallele.
     //-------------------------------------------
-
-    public static int distancePar1( String chaine1, String chaine2 ) {
+    
+    private static int tailleBloc(int nbThreads, int tailleDiag)
+    {
+        return tailleDiag / nbThreads;
+    }
+    
+    private static int bInf(int numThread, int tailleBloc, int reste)
+    {
+        int inf = numThread * tailleBloc;
+        
+        if (numThread < reste)
+        {
+            inf += numThread;
+        } else if (reste > 0)
+        {
+            inf += reste;
+        }
+        
+        return inf;
+        
+    }
+    
+    private static int bSup(int numThread, int tailleBloc, int reste, int tailleDiag)
+    {
+        int sup = bInf(numThread+1, tailleBloc, reste);
+        sup = Math.min(sup, tailleDiag -1 );
+        
         return 0;
+    }
+    
+    public static int distancePar1_opt( String chaine1, String chaine2 ) {
+        int size1 = chaine1.length();
+        int size2 = chaine2.length();
+        
+        // En s assurant que la plus petite chaine est toujours representee
+        // sur le meme axe de la matrice, l algorithme est simplifiee
+        if (size1 > size2)
+        {
+            int sizeTemp = size1;
+            size1 = size2;
+            size2 = sizeTemp;
+            
+            String chaineTemp = chaine1;
+            chaine1 = chaine2;
+            chaine2 = chaineTemp;
+        }
+        
+        int diag1[] = new int[size1 + 1];
+        int diag2[] = new int[size1 + 1];
+        int temp[] = null;
+        
+        int nbThreadsDiag;
+        
+        Thread threads[];
+        
+        
+        for (int x = 1 ; x <= size1 ; ++x)
+        {
+            diag2[0] = x; // matrice[0][x]
+            diag2[x] = x; // matrice[x][0]
+            
+            nbThreadsDiag = Math.min( x-2 , nbThreads);
+            threads = new Thread[nbThreadsDiag];
+            
+            for (int t = 0 ; t < nbThreadsDiag ; ++t)
+            {
+                int bInf;
+                int bSup;
+            }
+        }
+       
+        return diag1[0];
     }
     
     public static void methodePar1( int nbThreads ) {
@@ -228,28 +298,23 @@ class Distance {
         * */
         String s1 = "alpha";
         String s2 = "blphaalpha";
+       
         
-        int cost = distanceSeq_old(s1,s2);
-        System.out.println("distance_old = " + cost);
-        
-        cost = distanceSeq(s1,s2);
+        int cost = distanceSeq(s1,s2);
         System.out.println("distanceSeq = " + cost +"\n");
         
         
         s1 = "abc";
         s2 = "abc";
         
-        cost = distanceSeq_old(s1,s2);
-        System.out.println("distance_old = " + cost);
+
         
         cost = distanceSeq(s1,s2);
         System.out.println("distanceSeq = " + cost +"\n");
         
         s2 = "alpha";
         s1 = "blphaalpha";
-        
-        cost = distanceSeq_old(s1,s2);
-        System.out.println("distance_old = " + cost);
+
         
         cost = distanceSeq(s1,s2);
         System.out.println("distanceSeq = " + cost +"\n");
