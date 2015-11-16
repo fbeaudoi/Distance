@@ -54,10 +54,18 @@ class Distance {
      * Test l'egalite de deux caracteres
      * Retourne 0 si les deux caracteres sont egaux, 1 sinon.
      */
-    public static int cout_subst(char c1, char c2)
+    private static int cout_subst(char c1, char c2)
     {
         if (c1 == c2) return 0;
         return 1;
+    }
+    
+    /*
+    * Retourne la valeur minimale de trois valeur
+    */
+    private static int minimum(int a, int b, int c)
+    {
+        return Math.min(a, Math.min(b,c));
     }
 
     
@@ -65,7 +73,7 @@ class Distance {
     // Version sequentielle
     //-------------------------------------------
 
-    public static int distanceSeq( String chaine1, String chaine2 ) {
+    public static int distanceSeq_old( String chaine1, String chaine2 ) {
         
         int size1 = chaine1.length();
         int size2 = chaine2.length();
@@ -88,6 +96,36 @@ class Distance {
             }
         }
         return matrice[size1][size2];
+    }
+
+    public static int distanceSeq(String chaine1, String chaine2)
+    {
+        int size1 = chaine1.length();
+        int size2 = chaine2.length();
+        
+        int diag1[] = new int[size1 + 1];
+        int diag2[] = new int[size1 + 1];
+        int temp[] = null;
+        
+        for (int i = 0 ; i <= size1 ; ++i)
+            diag1[i] = i;
+        
+        for (int i = 1 ; i <= size2 ; ++i)
+        {
+            diag2[0] = i;
+            
+            for (int j = 1 ; j <= size1 ; ++j)
+            {
+                diag2[j] = minimum(diag2[j-1]+1, diag1[j]+1, diag1[j-1] + 
+                        cout_subst(chaine1.charAt(j-1), chaine2.charAt(i-1)));
+            }
+            
+            temp = diag1;
+            diag1 = diag2;
+            diag2 = temp;
+        }
+        
+        return diag1[size1];  
     }
     
     public static void methodeSeq() {
@@ -148,6 +186,7 @@ class Distance {
     ///////////////////////////////////////////////////////////////////    
     
     public static void main( String[] args ) {
+        /**
 	// On obtient les arguments de la ligne de commande et on les verifie.
 	if (args.length < 2) {
 	    System.out.println( "Usage:" );
@@ -186,5 +225,35 @@ class Distance {
             // On emet le temps en secondes.
             System.out.println( (tempsFin - tempsDebut) / 1000.0 );
         }
+        * */
+        String s1 = "alpha";
+        String s2 = "blphaalpha";
+        
+        int cost = distanceSeq_old(s1,s2);
+        System.out.println("distance_old = " + cost);
+        
+        cost = distanceSeq(s1,s2);
+        System.out.println("distanceSeq = " + cost +"\n");
+        
+        
+        s1 = "abc";
+        s2 = "abc";
+        
+        cost = distanceSeq_old(s1,s2);
+        System.out.println("distance_old = " + cost);
+        
+        cost = distanceSeq(s1,s2);
+        System.out.println("distanceSeq = " + cost +"\n");
+        
+        s2 = "alpha";
+        s1 = "blphaalpha";
+        
+        cost = distanceSeq_old(s1,s2);
+        System.out.println("distance_old = " + cost);
+        
+        cost = distanceSeq(s1,s2);
+        System.out.println("distanceSeq = " + cost +"\n");
+        
+        
     }
 }
