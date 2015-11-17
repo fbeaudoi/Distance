@@ -1,7 +1,10 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import static java.lang.Thread.sleep;
 import java.util.concurrent.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 class Distance {
     
@@ -106,7 +109,7 @@ class Distance {
         
         int[] col1 = new int[size1 + 1];
         int[] col2 = new int[size1 + 1];
-        int temp[] = null;
+        int temp[];
         
         for (int i = 0 ; i <= size1 ; ++i)
             col1[i] = i;
@@ -119,12 +122,14 @@ class Distance {
             {
                 col2[j] = minimum(col2[j-1]+1, col1[j]+1, col1[j-1] + 
                         coutSubst(chaine1.charAt(j-1), chaine2.charAt(i-1)));
+               
             }
-            
             temp = col1;
             col1 = col2;
             col2 = temp;
         }
+            
+        
         
         return col1[size1];  
     }
@@ -146,55 +151,7 @@ class Distance {
     //-------------------------------------------
     private static int seuil = 1;
     
-    private static int bInfold(int numThread, int tailleBloc, int reste, boolean calculerX0)
-    {
-        int inf = numThread * tailleBloc;
-        
-        if (numThread < reste)
-        {
-            inf += numThread;
-        } else if (reste > 0)
-        {
-            inf += reste;
-        }
-        
-        
-        return inf+1;
-        
-    }
-    
-    private static int bSupold(int numThread, int tailleBloc, int reste, int tailleDiag, boolean calculerY0)
-    {
-        int sup = 0;//bInf(numThread+1, tailleBloc, reste);
-        sup = Math.min(sup, tailleDiag);
-        
-        return sup;
-    }
-   
-    private static void calculerTrancheold(int bInf, int bSup, int diagCourante[], int diagPrecedente[], int diagDerniere[], String chaine1, String chaine2,int x)
-    {
-        System.out.println ("bInf ="+bInf+" bSup="+bSup);
-        for (int k = bInf ; k <= bSup ; ++k)
-        {
-            diagCourante[k] = minimum(diagPrecedente[k-1]+1, diagPrecedente[k]+1, diagDerniere[k-1] + 
-                        coutSubst(chaine1.charAt(k-1), chaine2.charAt(x-1)));
-            System.out.println("diag2[k]" +diagCourante[k]);
-            
-            
-            --x;
-        }
-    }
-    
-    private static void calculerTrancheold2(int bInf, int bSup, int diagCourante[], int diagPrecedente[], int diagDerniere[], String chaine1, String chaine2, int x, int y)
-    {
-        for (int i = bInf ; i <= bSup ; ++i)
-        {
-           diagCourante[i] = minimum (diagPrecedente[i-1] +1, 
-                                      diagPrecedente[i] +1,
-                                      diagDerniere[i-1] + coutSubst(chaine1.charAt(x-1), chaine2.charAt(y-1))); 
-        }
-    }
-    
+  
     private static int bInf (int numThread, int tailleBloc, int reste) 
     {
         int bInf = numThread * tailleBloc;
@@ -218,23 +175,44 @@ class Distance {
         return sup;
     }
     
-    private static void calculerTranche( int bInf, int bSup, int diagCourante[], int diagPrecedente[], int diagDerniere[], String chaine1, String chaine2, int x, int y, boolean iterPlusGrand)
+    private static void calculerTranche( int bInf, int bSup, int diagCourante[], int diagPrecedente[], int diagDerniere[], String chaine1, String chaine2, int x, int y, int ajustement)
     {
         for (int i = bInf ; i <= bSup; ++i)
         {
-            System.out.print("bInf="+i+ " traité : ("+x+","+y+")");
+            System.out.print("bInf="+i+ " bSup="+i+ " traité : ("+x+","+y+")");
             
            if (x != 0 && y != 0)
            {
-     
-               if (iterPlusGrand)
+               
+               if (ajustement > 0)
+               {    // cas lorsque l'index de l'iteration en cours est plus grande que
+                    // la taille de chaine1. k permet de pallier au changement de structure
+                   int y1 = y - ajustement;
+                   int k = y1;
+                   
+                   if (ajustement <= 1)
+                   {
+                       --k;
+                   }
+                   System.out.print("ajustement="+ajustement+" ");
+                   
+                   diagCourante[i] = minimum (diagPrecedente[y1] +1, 
+                                 diagPrecedente[y1+1] +1,
+                                 diagDerniere[k+1] + coutSubst(chaine1.charAt(x-1), chaine2.charAt(y-1)));
+                   System.out.println("["+diagCourante[i]+"] check");
+                   if (x ==2 && y == 2)
+                   {
+                       /*System.out.println("(diagPrecedente[y1]  " + y1+
+"\ndiagPrecedente[y1+1]  " + (y1+1)+
+"\ndiagDerniere[k+1] "+(k+1)+"\n coutSubst(chaine1.charAt(x-1), chaine2.charAt(y-1))"+coutSubst(chaine1.charAt(x-1), chaine2.charAt(y-1)));
+                  */
+                   System.out.println("pre "+(diagPrecedente[y1] +1) +"\n pre "+ 
+                                 (diagPrecedente[y1+1] +1) + "\ndern "+
+                                 (diagDerniere[k+1])+" coutsub= " + coutSubst(chaine1.charAt(x-1), chaine2.charAt(y-1)));
+                   }
+               } else
                {
-                    diagCourante[i] = minimum (diagPrecedente[y] +1, 
-                                 diagPrecedente[y+1] +1,
-                                 diagDerniere[y] + coutSubst(chaine1.charAt(x-1), chaine2.charAt(y-1)));
-               System.out.println("["+diagCourante[i]+"] check");
-               } else 
-               {
+               
                    diagCourante[i] = minimum (diagPrecedente[y-1] +1, 
                                  diagPrecedente[y] +1,
                                  diagDerniere[y-1] + coutSubst(chaine1.charAt(x-1), chaine2.charAt(y-1)));
@@ -246,11 +224,10 @@ class Distance {
            --x;
            ++y;
            
-           //matriceDistance[ligne+i][colonne-i] = Math.min(Math.min(matriceDistance[ligne+i-1][colonne-i] + 1, matriceDistance[ligne+i][colonne-i-1] + 1), 
-		//			matriceDistance[ligne+i-1][colonne-i-1] + cout_sub( chaine1.charAt(ligne+i-1), chaine2.charAt(colonne-i-1) ));
         }
     }
     public static int distancePar1( String chaine1, String chaine2 ) {
+        if (chaine1.length() > 0) return 0;
         int size1 = chaine1.length();
         int size2 = chaine2.length();
         
@@ -327,7 +304,8 @@ class Distance {
             final String c1 = chaine1;
             final String c2 = chaine2;
             
-            final boolean iterPlusGrand = iter > size1+1;
+            //permet d'ajuster l'index des tableaux une fois que iter > size1
+            final int ajustement = iter - (size1); 
             
             threads = new Thread[nbThreadsDiag];
             for ( int t = 0 ; t < nbThreadsDiag ; ++t )
@@ -339,7 +317,7 @@ class Distance {
                 final int yd = yDebut;
                 
                 threads[t] = new Thread (
-                    () -> calculerTranche( bInf, bSup, dc, dp, dd, c1, c2, xd, yd,iterPlusGrand)
+                    () -> calculerTranche( bInf, bSup, dc, dp, dd, c1, c2, xd, yd, ajustement)
                 );
                 threads[t].start();
             }
@@ -349,14 +327,24 @@ class Distance {
                 try { threads[t].join(); } catch (Exception e ) {};
             }
             
+            System.out.println("\nDiagCourant : ");
+        for (int i = 0 ; i <= size1 ; ++i){
+            System.out.println(diagCourante[i]);
+        }
             //rotation des tableaux
             diagCourante = dd;
             diagPrecedente = dc;
             diagDerniere = dp;
+            
+            try {
+                sleep(200);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(Distance.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
             
-           /* 
-           System.out.println("DiagCourant : ");
+           
+          /* System.out.println("\n\nDiagCourant : ");
         for (int i = 0 ; i <= size1 ; ++i){
             System.out.println(diagCourante[i]);
         }
@@ -367,8 +355,8 @@ class Distance {
         System.out.println("\ndiagDerniere : ");
         for (int i = 0 ; i <= size1 ; ++i){
             System.out.println(diagDerniere[i]);
-        }
-        */
+        }*/
+        
         return diagPrecedente[0];
     }
     
@@ -411,7 +399,7 @@ class Distance {
     ///////////////////////////////////////////////////////////////////    
     
     public static void main( String[] args ) {
-        /**
+        /*
 	// On obtient les arguments de la ligne de commande et on les verifie.
 	if (args.length < 2) {
 	    System.out.println( "Usage:" );
@@ -450,38 +438,41 @@ class Distance {
             // On emet le temps en secondes.
             System.out.println( (tempsFin - tempsDebut) / 1000.0 );
         }
-        * */
+        */
         String s1 = "alpha";
         String s2 = "blphaalpha";
        
-        
-        int cost = distanceSeq(s1,s2);
-        //System.out.println("distanceSeq = " + cost +"\n");
+       int cost = distanceSeq_old(s1,s2);
+        System.out.println("distanceSeq_old = " + cost);
+        cost = distanceSeq(s1,s2);
+        System.out.println("distanceSeq = " + cost +"\n");
         
         
         s1 = "abc";
         s2 = "abc";
         
 
-        
+        cost = distanceSeq_old(s1,s2);
+        System.out.println("distanceSeq_old = " + cost );
         cost = distanceSeq(s1,s2);
-       // System.out.println("distanceSeq = " + cost +"\n");
+        System.out.println("distanceSeq = " + cost +"\n");
         
-        //s2 = "chaton";
-       // s1 = "ckarolnyht";
+        s2 = "chaton";
+       s1 = "ckarolnyht";
 
-        
-       // cost = distanceSeq(s1,s2);
-        //System.out.println("distanceSeq = " + cost +"\n");
+        cost = distanceSeq_old(s1,s2);
+        System.out.println("distanceSeq_old = " + cost );
+        cost = distanceSeq(s1,s2);
+       System.out.println("distanceSeq = " + cost +"\n");
         
         s2 = "abc";
         s1 = "aqccc";
 
-        
+       cost = distanceSeq_old(s1,s2);
+        System.out.println("distanceSeq_old = " + cost );
         cost = distanceSeq(s1,s2);
         System.out.println("distanceSeq = " + cost +"\n");
-        cost = distancePar1(s1,s2);
-        System.out.println("distancePar1 = " + cost +"\n");
+        
         
         
     }
