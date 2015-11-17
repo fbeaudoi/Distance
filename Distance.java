@@ -55,7 +55,7 @@ class Distance {
      * Test l'egalite de deux caracteres
      * Retourne 0 si les deux caracteres sont egaux, 1 sinon.
      */
-    private static int cout_subst(char c1, char c2)
+    private static int coutSubst(char c1, char c2)
     {
         if (c1 == c2) return 0;
         return 1;
@@ -93,7 +93,7 @@ class Distance {
             for (int j = 1 ; j <= size2 ; ++j)
             {
                 matrice[i][j] = Math.min (matrice[i-1][j] + 1, Math.min (matrice[i][j-1] + 1,
-                        matrice[i-1][j-1] + cout_subst(chaine1.charAt(i-1), chaine2.charAt(j-1))));           
+                        matrice[i-1][j-1] + coutSubst(chaine1.charAt(i-1), chaine2.charAt(j-1))));           
             }
         }
         return matrice[size1][size2];
@@ -118,7 +118,7 @@ class Distance {
             for (int j = 1 ; j <= size1 ; ++j)
             {
                 col2[j] = minimum(col2[j-1]+1, col1[j]+1, col1[j-1] + 
-                        cout_subst(chaine1.charAt(j-1), chaine2.charAt(i-1)));
+                        coutSubst(chaine1.charAt(j-1), chaine2.charAt(i-1)));
             }
             
             temp = col1;
@@ -146,12 +146,7 @@ class Distance {
     //-------------------------------------------
     private static int seuil = 1;
     
-    private static int tailleBloc(int nbThreads, int tailleDiag)
-    {
-        return tailleDiag / nbThreads;
-    }
-    
-    private static int bInf(int numThread, int tailleBloc, int reste)
+    private static int bInfold(int numThread, int tailleBloc, int reste, boolean calculerX0)
     {
         int inf = numThread * tailleBloc;
         
@@ -163,33 +158,98 @@ class Distance {
             inf += reste;
         }
         
+        
         return inf+1;
         
     }
     
-    private static int bSup(int numThread, int tailleBloc, int reste, int tailleDiag)
+    private static int bSupold(int numThread, int tailleBloc, int reste, int tailleDiag, boolean calculerY0)
     {
-        int sup = bInf(numThread+1, tailleBloc, reste);
+        int sup = 0;//bInf(numThread+1, tailleBloc, reste);
         sup = Math.min(sup, tailleDiag);
         
         return sup;
     }
    
-    private static void calculerTranche(int bInf, int bSup, int diagCourante[], int diagPrecedente[], int diagDerniere[], String chaine1, String chaine2,int x)
+    private static void calculerTrancheold(int bInf, int bSup, int diagCourante[], int diagPrecedente[], int diagDerniere[], String chaine1, String chaine2,int x)
     {
         System.out.println ("bInf ="+bInf+" bSup="+bSup);
         for (int k = bInf ; k <= bSup ; ++k)
         {
             diagCourante[k] = minimum(diagPrecedente[k-1]+1, diagPrecedente[k]+1, diagDerniere[k-1] + 
-                        cout_subst(chaine1.charAt(k-1), chaine2.charAt(x-1)));
+                        coutSubst(chaine1.charAt(k-1), chaine2.charAt(x-1)));
             System.out.println("diag2[k]" +diagCourante[k]);
             
-            System.out.println("chaine1.charAt(k-1)="+chaine1.charAt(k-1)+" chaine2.charAt(x-1)="+chaine2.charAt(x-1)+"  coutSubst="+cout_subst(chaine1.charAt(k-1), chaine2.charAt(x-1)));
             
             --x;
         }
     }
     
+    private static void calculerTrancheold2(int bInf, int bSup, int diagCourante[], int diagPrecedente[], int diagDerniere[], String chaine1, String chaine2, int x, int y)
+    {
+        for (int i = bInf ; i <= bSup ; ++i)
+        {
+           diagCourante[i] = minimum (diagPrecedente[i-1] +1, 
+                                      diagPrecedente[i] +1,
+                                      diagDerniere[i-1] + coutSubst(chaine1.charAt(x-1), chaine2.charAt(y-1))); 
+        }
+    }
+    
+    private static int bInf (int numThread, int tailleBloc, int reste) 
+    {
+        int bInf = numThread * tailleBloc;
+        
+        if (numThread < reste)
+        {
+            bInf += numThread;
+        } else if (reste > 0)
+        {
+            bInf += reste;
+        }
+        
+        return  bInf;
+    }
+    
+    private static int bSup (int numThread, int tailleBloc, int reste, int nbTache)
+    {
+        int sup = bInf(numThread+1, tailleBloc, reste);
+        sup = Math.min(sup, nbTache-1);
+        
+        return sup;
+    }
+    
+    private static void calculerTranche( int bInf, int bSup, int diagCourante[], int diagPrecedente[], int diagDerniere[], String chaine1, String chaine2, int x, int y, boolean iterPlusGrand)
+    {
+        for (int i = bInf ; i <= bSup; ++i)
+        {
+            System.out.print("bInf="+i+ " traité : ("+x+","+y+")");
+            
+           if (x != 0 && y != 0)
+           {
+     
+               if (iterPlusGrand)
+               {
+                    diagCourante[i] = minimum (diagPrecedente[y] +1, 
+                                 diagPrecedente[y+1] +1,
+                                 diagDerniere[y] + coutSubst(chaine1.charAt(x-1), chaine2.charAt(y-1)));
+               System.out.println("["+diagCourante[i]+"] check");
+               } else 
+               {
+                   diagCourante[i] = minimum (diagPrecedente[y-1] +1, 
+                                 diagPrecedente[y] +1,
+                                 diagDerniere[y-1] + coutSubst(chaine1.charAt(x-1), chaine2.charAt(y-1)));
+               System.out.println("["+diagCourante[i]+"] check");
+               }
+               
+           }
+           System.out.println();
+           --x;
+           ++y;
+           
+           //matriceDistance[ligne+i][colonne-i] = Math.min(Math.min(matriceDistance[ligne+i-1][colonne-i] + 1, matriceDistance[ligne+i][colonne-i-1] + 1), 
+		//			matriceDistance[ligne+i-1][colonne-i-1] + cout_sub( chaine1.charAt(ligne+i-1), chaine2.charAt(colonne-i-1) ));
+        }
+    }
     public static int distancePar1( String chaine1, String chaine2 ) {
         int size1 = chaine1.length();
         int size2 = chaine2.length();
@@ -207,14 +267,22 @@ class Distance {
             chaine2 = chaineTemp;
         }
         
+        // chaque tableau represente une diagonale de la "matrice"
+        // courante devient precedente, precedente devient derniere, derniere devient courante
+        // Ainsi, les valeurs qui ne seront plus utiles sont supprimée de la "matrice"
         int diagCourante[] = new int[size1 + 1];
         int diagPrecedente[] = new int[size1 + 1];
         int diagDerniere[] = new int[size1 + 1];
-        int temp[] = null;
         
         int nbThreadsDiag;
         int tailleBloc;
         int reste;
+        
+        int xDebut; //matrice[x][y] debut diagonal
+        int yDebut;
+        int xFin; //matrice[x][y] fin diagonal
+        int yFin;
+        int nbTache;
         
         Thread threads[];
         
@@ -222,45 +290,72 @@ class Distance {
         diagPrecedente[0] = 1;
         diagPrecedente[1] = 1;
         
-        for (int x = 2 ; x <3 ; ++x)
+        for (int iter = 2 ; iter < size1 + size2 ; ++iter)
         {
+            xDebut = Math.min ( iter, size1);
+            xFin = Math.max (0 , iter - size2);
             
-            diagCourante[0] = x; // matrice[0][x]
-            diagCourante[x] = x; // matrice[x][0]
-             
-            nbThreadsDiag = Math.min( x-1 , seuil);
-            tailleBloc = tailleBloc(nbThreadsDiag, x-1);
-            System.out.println("taillebloc="+tailleBloc+ " nbThreadsDiag="+nbThreadsDiag);
-            reste = (x-1) % nbThreadsDiag;
-            System.out.println("reste="+reste);
-            threads = new Thread[nbThreadsDiag];
+            yDebut = Math.max ( 0, iter - size1 );
+            yFin = Math.min ( iter, size2);
             
-            final int _x = x-1;
-            final String c1 = chaine1;
-            final String c2 = chaine2;
+            System.out.println("\niter="+iter+"--------------");
+            System.out.println("debut=("+xDebut+","+yDebut+") fin=("+xFin+","+yFin+")");
+            
+            if (iter <= size1)
+            {
+                nbTache = iter +1;
+                diagCourante[0] = iter;
+                diagCourante[xDebut] = iter;
+            } else if ( iter <= size2)
+            {
+                nbTache = size1 +1;
+                diagCourante[xDebut] = iter;
+            } else
+            {
+                nbTache = size1 + size2 - iter +1;
+            }
+            System.out.println("nbTache="+nbTache);
+            
+            nbThreadsDiag = Math.min( nbTache , seuil);
+            tailleBloc = nbTache / nbThreadsDiag;
+            reste = nbTache % nbThreadsDiag;
+            
             final int dc[] = diagCourante;
             final int dp[] = diagPrecedente;
             final int dd[] = diagDerniere;
             
-            for (int t = 0 ; t < nbThreadsDiag ; ++t)
+            final String c1 = chaine1;
+            final String c2 = chaine2;
+            
+            final boolean iterPlusGrand = iter > size1+1;
+            
+            threads = new Thread[nbThreadsDiag];
+            for ( int t = 0 ; t < nbThreadsDiag ; ++t )
             {
-                final int bInf = bInf( t, tailleBloc, reste );
-                final int bSup = bSup( t, tailleBloc, reste, x-1);
+                final int bInf = bInf( t, tailleBloc, reste);
+                final int bSup = bSup( t, tailleBloc, reste, nbTache);
+                
+                final int xd = xDebut;
+                final int yd = yDebut;
                 
                 threads[t] = new Thread (
-                    () -> calculerTranche( bInf, bSup, dc ,dp ,dd ,c1, c2 , _x)
+                    () -> calculerTranche( bInf, bSup, dc, dp, dd, c1, c2, xd, yd,iterPlusGrand)
                 );
                 threads[t].start();
             }
             
-            for (int k =0 ; k < nbThreadsDiag ; ++k)
+            for (int t = 0 ; t < nbThreadsDiag ; ++t)
             {
-                try { threads[k].join(); } catch (Exception e ) {};
+                try { threads[t].join(); } catch (Exception e ) {};
             }
+            
+            //rotation des tableaux
+            diagCourante = dd;
+            diagPrecedente = dc;
+            diagDerniere = dp;
         }
             
-            
-           
+           /* 
            System.out.println("DiagCourant : ");
         for (int i = 0 ; i <= size1 ; ++i){
             System.out.println(diagCourante[i]);
@@ -272,9 +367,9 @@ class Distance {
         System.out.println("\ndiagDerniere : ");
         for (int i = 0 ; i <= size1 ; ++i){
             System.out.println(diagDerniere[i]);
-       
         }
-        return diagCourante[0];
+        */
+        return diagPrecedente[0];
     }
     
     public static void methodePar1( int nbThreads ) {
@@ -361,7 +456,7 @@ class Distance {
        
         
         int cost = distanceSeq(s1,s2);
-        System.out.println("distanceSeq = " + cost +"\n");
+        //System.out.println("distanceSeq = " + cost +"\n");
         
         
         s1 = "abc";
@@ -370,21 +465,23 @@ class Distance {
 
         
         cost = distanceSeq(s1,s2);
-        System.out.println("distanceSeq = " + cost +"\n");
+       // System.out.println("distanceSeq = " + cost +"\n");
         
-        s2 = "alpha";
-        s1 = "blphaalpha";
+        //s2 = "chaton";
+       // s1 = "ckarolnyht";
+
+        
+       // cost = distanceSeq(s1,s2);
+        //System.out.println("distanceSeq = " + cost +"\n");
+        
+        s2 = "abc";
+        s1 = "aqccc";
 
         
         cost = distanceSeq(s1,s2);
         System.out.println("distanceSeq = " + cost +"\n");
-        
-        s2 = "abc";
-        s1 = "abq";
-
-        
         cost = distancePar1(s1,s2);
-        //System.out.println("distanceSeq = " + cost +"\n");
+        System.out.println("distancePar1 = " + cost +"\n");
         
         
     }
