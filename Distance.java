@@ -2,6 +2,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import static java.lang.Thread.sleep;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -151,8 +153,6 @@ class Distance {
     //-------------------------------------------
     // Premiere version parallele.
     //-------------------------------------------
-    private static int seuil = 4;
-    
   
     private static int bInf (int numThread, int tailleBloc, int reste) 
     {
@@ -228,7 +228,7 @@ class Distance {
            
         }
     }
-    public static int distancePar1( String chaine1, String chaine2 ) {
+    public static int distancePar1( String chaine1, String chaine2, int nbThreads ) {
        // if (chaine1.length() > 0) return 0;
         int size1 = chaine1.length();
         int size2 = chaine2.length();
@@ -269,7 +269,9 @@ class Distance {
         diagPrecedente[0] = 1;
         diagPrecedente[1] = 1;
         
-        for (int iter = 2 ; iter <= size1 + size2 ; ++iter)
+        int nbIter = size1 + size2;
+        
+        for (int iter = 2 ; iter <= nbIter ; ++iter)
         {
             xDebut = Math.min ( iter, size1);
             xFin = Math.max (0 , iter - size2);
@@ -295,7 +297,7 @@ class Distance {
             }
             //System.out.println("nbTache="+nbTache);
             
-            nbThreadsDiag = Math.min( nbTache , seuil);
+            nbThreadsDiag = Math.min( nbTache , nbThreads);
             tailleBloc = nbTache / nbThreadsDiag;
             reste = nbTache % nbThreadsDiag;
             final int dc[] = diagCourante;
@@ -304,7 +306,7 @@ class Distance {
             
             final String c1 = chaine1;
             final String c2 = chaine2;
-            System.out.println("nbThreads="+nbThreadsDiag+" tailleBloc="+tailleBloc);
+            
             
             //permet d'ajuster l'index des tableaux une fois que iter > size1
             final int ajustement = iter - size1; 
@@ -376,23 +378,191 @@ class Distance {
     
     public static void methodePar1( int nbThreads ) {
         String chaine1, chaine2;
-        seuil = nbThreads;
         
         while ( (chaine1 = lireChaine()) != null ) {
             chaine2 = lireChaine();
-            int distance = distancePar1(chaine1, chaine2);
+            int distance = distancePar1(chaine1, chaine2, nbThreads);
             if ( !benchmarks ) {
                 System.out.println( distance );
             }
         }
     }
+
+    
+
     
     //-------------------------------------------
     // Deuxieme version parallele.
     //-------------------------------------------
-
-    public static int distancePar2( String chaine1, String chaine2 ) {
-        return 0;
+    
+    private static class Travailleur implements Runnable {
+        private final int bInf;
+        private final int bSup;
+        private final int xd;
+        private final int yd;
+        private final int ajustement;
+        private final int diagCourante[];
+        private final int diagPrecedente[];
+        private final int diagDerniere[];
+        private final String chaine1;
+        private final String chaine2;
+        
+        
+        Travailleur(int bInf, int bSup, int diagCourante[], int diagPrecedente[], 
+                int diagDerniere[], String chaine1, String chaine2, int xd, 
+                int yd, int ajustement)
+        {
+            this.bInf = bInf;
+            this.bSup = bSup;
+            this.diagCourante = diagCourante;
+            this.diagPrecedente = diagPrecedente;
+            this.diagDerniere = diagDerniere;
+            this.chaine1 = chaine1;
+            this.chaine2 = chaine2;
+            this.xd = xd;
+            this. yd = yd;
+            this.ajustement = ajustement;
+        }
+        
+        @Override
+        public void run()
+        {
+            calculerTranche (bInf, bSup, diagCourante, diagPrecedente, diagDerniere, chaine1, chaine2, xd, yd, ajustement);
+        }
+    }
+  
+    
+    public static int distancePar2( String chaine1, String chaine2, int nbThreads ) {
+        ExecutorService threadPool;
+        ArrayList<Future> futures;
+        
+        int size1 = chaine1.length();
+        int size2 = chaine2.length();
+        int nbIter = size1 + size2;
+        
+        if (size1 > size2)
+        {
+            int sizeTemp = size1;
+            size1 = size2;
+            size2 = sizeTemp;
+            
+            String chaineTemp = chaine1;
+            chaine1 = chaine2;
+            chaine2 = chaineTemp;
+        }
+        
+        int diagCourante[] = new int[size1+1];
+        int diagPrecedente[] = new int[size1+1];
+        diagPrecedente[0] = 1;
+        diagPrecedente[1] = 1;
+        int diagDerniere[] = new int [size1+1];
+        
+        int nbTache;
+        
+        int xDebut;
+        int xFin;
+        
+        int yDebut;
+        int yFin;
+        
+        for (int iter = 2 ; iter <= nbIter ; ++iter)
+        {
+            xDebut = Math.min ( iter, size1);
+            xFin = Math.max (0 , iter - size2);
+            
+            yDebut = Math.max ( 0, iter - size1 );
+            yFin = Math.min ( iter, size2);
+            
+            if (iter <= size1)
+            {
+                nbTache = iter +1;
+                diagCourante[0] = iter;
+                diagCourante[xDebut] = iter;
+            } else if ( iter <= size2)
+            {
+                nbTache = size1 +1;
+                diagCourante[xDebut] = iter;
+            } else
+            {
+                nbTache = size1 + size2 - iter +1;
+            }
+            
+            int nbThreadsDiag = Math.min( nbTache , nbThreads);
+            int tailleBloc = nbTache / nbThreadsDiag;
+            int reste = nbTache % nbThreadsDiag;
+            //final int dc[] = diagCourante;
+           // final int dp[] = diagPrecedente;
+            //final int dd[] = diagDerniere;
+            
+            //final String c1 = chaine1;
+            //final String c2 = chaine2;
+            //System.out.println("nbThreads="+nbThreadsDiag+" tailleBloc="+tailleBloc);
+            
+            //permet d'ajuster l'index des tableaux une fois que iter > size1
+            int ajustement = iter - size1; 
+            int bInf;
+            int bSup;
+            int xd;
+            int yd;
+            threadPool = Executors.newFixedThreadPool(nbThreads);
+            futures = new ArrayList<Future>();
+            
+            for (int i = 0 ; i < nbThreadsDiag ; ++i)
+            {
+            
+                bInf = bInf( i, tailleBloc, reste);
+            
+                bSup = bSup( i, tailleBloc, reste, nbTache);
+                
+                xd = xDebut - bInf;
+                yd = yDebut + bInf;
+                
+                Runnable travailleur = new Travailleur(bInf, bSup, diagCourante, diagPrecedente, diagDerniere, chaine1, chaine2, xd, yd, ajustement);
+                futures.add(threadPool.submit(travailleur));
+            }
+            
+            //attendre que tout les Threads aient terminé
+            for (Future f: futures)
+            {
+                try 
+                {
+                    if (f.get() != null)
+                    {
+                        throw new RuntimeException();
+                    }
+                    
+                } catch (InterruptedException ex) 
+                {
+                    throw new RuntimeException();
+                } catch (ExecutionException ex) 
+                {
+                    throw new RuntimeException();
+                }
+                
+            }
+            threadPool.shutdown();
+            
+          /*  System.out.println("\n\nDiagCourant : ");
+        for (int i = 0 ; i <= size1 ; ++i){
+            System.out.print(diagCourante[i]);
+        }
+        System.out.println("\ndiagPrecedent : ");
+        for (int i = 0 ; i <= size1 ; ++i){
+            System.out.print(diagPrecedente[i]);
+        }
+        System.out.println("\ndiagDerniere : ");
+        for (int i = 0 ; i <= size1 ; ++i){
+            System.out.print(diagDerniere[i]);
+        }*/
+            int temp[];
+            
+            temp = diagCourante;
+            diagCourante = diagDerniere;
+            diagDerniere = diagPrecedente;
+            diagPrecedente = temp;
+        }
+        
+        return diagPrecedente[0];
     }
 
     public static void methodePar2( int nbThreads ) {
@@ -400,7 +570,7 @@ class Distance {
         
         while ( (chaine1 = lireChaine()) != null ) {
             chaine2 = lireChaine();
-            int distance = distancePar2(chaine1, chaine2);
+            int distance = distancePar2(chaine1, chaine2, nbThreads);
             if ( !benchmarks ) {
                 System.out.println( distance );
             }
@@ -413,7 +583,7 @@ class Distance {
     ///////////////////////////////////////////////////////////////////    
     
     public static void main( String[] args ) {
-        /*
+        
 	// On obtient les arguments de la ligne de commande et on les verifie.
 	if (args.length < 2) {
 	    System.out.println( "Usage:" );
@@ -452,7 +622,7 @@ class Distance {
             // On emet le temps en secondes.
             System.out.println( (tempsFin - tempsDebut) / 1000.0 );
         }
-        */
+        /*
         String s2 = "alpha";
         String s1 = "blphaalpha";
        
@@ -460,8 +630,10 @@ class Distance {
         System.out.println("distanceSeq_old = " + cost);
         cost = distanceSeq(s1,s2);
         System.out.println("distanceSeq = " + cost );
-        cost = distancePar1(s1,s2);
-        System.out.println("distancePar1 = " + cost +"\n");
+        cost = distancePar1(s1,s2,3);
+        System.out.println("distancePar1 = " + cost );
+        cost = distancePar2(s1,s2,3);
+        System.out.println("distancePar2 = " + cost +"\n");
        
         
         s1 = "abc";
@@ -472,8 +644,10 @@ class Distance {
         System.out.println("distanceSeq_old = " + cost );
         cost = distanceSeq(s1,s2);
         System.out.println("distanceSeq = " + cost );
-        cost = distancePar1(s1,s2);
-        System.out.println("distancePar1 = " + cost +"\n");
+        cost = distancePar1(s1,s2,3);
+        System.out.println("distancePar1 = " + cost );
+        cost = distancePar2(s1,s2,3);
+        System.out.println("distancePar2 = " + cost +"\n");
        
         s2 = "chaton";
        s1 = "ckarolnyht";
@@ -482,9 +656,11 @@ class Distance {
         System.out.println("distanceSeq_old = " + cost );
         cost = distanceSeq(s1,s2);
         System.out.println("distanceSeq = " + cost );
-        cost = distancePar1(s1,s2);
-        System.out.println("distancePar1 = " + cost +"\n");
-        
+        cost = distancePar1(s1,s2,3);
+        System.out.println("distancePar1 = " + cost );
+        cost = distancePar2(s1,s2,3);
+        System.out.println("distancePar2 = " + cost +"\n");
+                
         s2 = "abc";
         s1 = "abcc";
 
@@ -492,8 +668,10 @@ class Distance {
         System.out.println("distanceSeq_old = " + cost );
         cost = distanceSeq(s1,s2);
         System.out.println("distanceSeq = " + cost );
-        cost = distancePar1(s1,s2);
-        System.out.println("distancePar1 = " + cost +"\n");
+        cost = distancePar1(s1,s2,3);
+        System.out.println("distancePar1 = " + cost );
+        cost = distancePar2(s1,s2,3);
+        System.out.println("distancePar2 = " + cost +"\n");
         
         
         s2 = "abcjfjddddkvvvvkffkkviivinvvnfvvfnfvfvfvvvklnvnklvnklfnklfvnklvmmmaaaaaaaaaaaaaaaaaaalddddddddkekffffffffffff";
@@ -503,9 +681,12 @@ class Distance {
         System.out.println("distanceSeq_old = " + cost );
         cost = distanceSeq(s1,s2);
         System.out.println("distanceSeq = " + cost );
-        cost = distancePar1(s1,s2);
-        System.out.println("distancePar1 = " + cost +"\n");
+        cost = distancePar1(s1,s2,3);
+        System.out.println("distancePar1 = " + cost );
+        cost = distancePar2(s1,s2,3);
+        System.out.println("distancePar2 = " + cost +"\n");
         
+        */
         
         
     }
