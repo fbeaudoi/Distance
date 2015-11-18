@@ -151,7 +151,7 @@ class Distance {
     //-------------------------------------------
     // Premiere version parallele.
     //-------------------------------------------
-    private static int seuil = 1;
+    private static int seuil = 4;
     
   
     private static int bInf (int numThread, int tailleBloc, int reste) 
@@ -304,6 +304,7 @@ class Distance {
             
             final String c1 = chaine1;
             final String c2 = chaine2;
+            System.out.println("nbThreads="+nbThreadsDiag+" tailleBloc="+tailleBloc);
             
             //permet d'ajuster l'index des tableaux une fois que iter > size1
             final int ajustement = iter - size1; 
@@ -314,8 +315,8 @@ class Distance {
                 final int bInf = bInf( t, tailleBloc, reste);
                 final int bSup = bSup( t, tailleBloc, reste, nbTache);
                 
-                final int xd = xDebut;
-                final int yd = yDebut;
+                final int xd = xDebut - bInf;
+                final int yd = yDebut + bInf;
                 
                 threads[t] = new Thread (
                     () -> calculerTranche( bInf, bSup, dc, dp, dd, c1, c2, xd, yd, ajustement)
@@ -486,6 +487,17 @@ class Distance {
         
         s2 = "abc";
         s1 = "abcc";
+
+       cost = distanceSeq_old(s1,s2);
+        System.out.println("distanceSeq_old = " + cost );
+        cost = distanceSeq(s1,s2);
+        System.out.println("distanceSeq = " + cost );
+        cost = distancePar1(s1,s2);
+        System.out.println("distancePar1 = " + cost +"\n");
+        
+        
+        s2 = "abcjfjddddkvvvvkffkkviivinvvnfvvfnfvfvfvvvklnvnklvnklfnklfvnklvmmmaaaaaaaaaaaaaaaaaaalddddddddkekffffffffffff";
+        s1 = "abcceeeeeeeeeeeeeeeeeeeesssssssssssshhhhhhhhhhhhtddxxxxxxxxxxxxxbbbbbbbbbbbbbbtfg";
 
        cost = distanceSeq_old(s1,s2);
         System.out.println("distanceSeq_old = " + cost );
