@@ -124,9 +124,11 @@ class Distance {
                         coutSubst(chaine1.charAt(j-1), chaine2.charAt(i-1)));
                
             }
+            
             temp = col1;
             col1 = col2;
             col2 = temp;
+            
         }
             
         
@@ -179,7 +181,7 @@ class Distance {
     {
         for (int i = bInf ; i <= bSup; ++i)
         {
-            System.out.print("bInf="+i+ " bSup="+i+ " traité : ("+x+","+y+")");
+           // System.out.print("bInf="+i+ " bSup="+i+ " traité : ("+x+","+y+")");
             
            if (x != 0 && y != 0)
            {
@@ -194,21 +196,21 @@ class Distance {
                    {
                        --k;
                    }
-                   System.out.print("ajustement="+ajustement+" ");
+                   //System.out.print("ajustement="+ajustement+" ");
                    
                    diagCourante[i] = minimum (diagPrecedente[y1] +1, 
                                  diagPrecedente[y1+1] +1,
                                  diagDerniere[k+1] + coutSubst(chaine1.charAt(x-1), chaine2.charAt(y-1)));
-                   System.out.println("["+diagCourante[i]+"] check");
+                   //System.out.println("["+diagCourante[i]+"] check");
                    if (x ==2 && y == 2)
                    {
                        /*System.out.println("(diagPrecedente[y1]  " + y1+
 "\ndiagPrecedente[y1+1]  " + (y1+1)+
 "\ndiagDerniere[k+1] "+(k+1)+"\n coutSubst(chaine1.charAt(x-1), chaine2.charAt(y-1))"+coutSubst(chaine1.charAt(x-1), chaine2.charAt(y-1)));
                   */
-                   System.out.println("pre "+(diagPrecedente[y1] +1) +"\n pre "+ 
-                                 (diagPrecedente[y1+1] +1) + "\ndern "+
-                                 (diagDerniere[k+1])+" coutsub= " + coutSubst(chaine1.charAt(x-1), chaine2.charAt(y-1)));
+                  // System.out.println("pre "+(diagPrecedente[y1] +1) +"\n pre "+ 
+                                // (diagPrecedente[y1+1] +1) + "\ndern "+
+                                // (diagDerniere[k+1])+" coutsub= " + coutSubst(chaine1.charAt(x-1), chaine2.charAt(y-1)));
                    }
                } else
                {
@@ -216,18 +218,18 @@ class Distance {
                    diagCourante[i] = minimum (diagPrecedente[y-1] +1, 
                                  diagPrecedente[y] +1,
                                  diagDerniere[y-1] + coutSubst(chaine1.charAt(x-1), chaine2.charAt(y-1)));
-               System.out.println("["+diagCourante[i]+"] check");
+               //System.out.println("["+diagCourante[i]+"] check");
                }
                
            }
-           System.out.println();
+          // System.out.println();
            --x;
            ++y;
            
         }
     }
     public static int distancePar1( String chaine1, String chaine2 ) {
-        if (chaine1.length() > 0) return 0;
+       // if (chaine1.length() > 0) return 0;
         int size1 = chaine1.length();
         int size2 = chaine2.length();
         
@@ -267,7 +269,7 @@ class Distance {
         diagPrecedente[0] = 1;
         diagPrecedente[1] = 1;
         
-        for (int iter = 2 ; iter < size1 + size2 ; ++iter)
+        for (int iter = 2 ; iter <= size1 + size2 ; ++iter)
         {
             xDebut = Math.min ( iter, size1);
             xFin = Math.max (0 , iter - size2);
@@ -275,8 +277,8 @@ class Distance {
             yDebut = Math.max ( 0, iter - size1 );
             yFin = Math.min ( iter, size2);
             
-            System.out.println("\niter="+iter+"--------------");
-            System.out.println("debut=("+xDebut+","+yDebut+") fin=("+xFin+","+yFin+")");
+           // System.out.println("\niter="+iter+"--------------");
+           // System.out.println("debut=("+xDebut+","+yDebut+") fin=("+xFin+","+yFin+")");
             
             if (iter <= size1)
             {
@@ -291,12 +293,11 @@ class Distance {
             {
                 nbTache = size1 + size2 - iter +1;
             }
-            System.out.println("nbTache="+nbTache);
+            //System.out.println("nbTache="+nbTache);
             
             nbThreadsDiag = Math.min( nbTache , seuil);
             tailleBloc = nbTache / nbThreadsDiag;
             reste = nbTache % nbThreadsDiag;
-            
             final int dc[] = diagCourante;
             final int dp[] = diagPrecedente;
             final int dd[] = diagDerniere;
@@ -305,7 +306,7 @@ class Distance {
             final String c2 = chaine2;
             
             //permet d'ajuster l'index des tableaux une fois que iter > size1
-            final int ajustement = iter - (size1); 
+            final int ajustement = iter - size1; 
             
             threads = new Thread[nbThreadsDiag];
             for ( int t = 0 ; t < nbThreadsDiag ; ++t )
@@ -327,34 +328,46 @@ class Distance {
                 try { threads[t].join(); } catch (Exception e ) {};
             }
             
-            System.out.println("\nDiagCourant : ");
+         /* System.out.println("\n\nDiagCourant : ");
         for (int i = 0 ; i <= size1 ; ++i){
-            System.out.println(diagCourante[i]);
+            System.out.print(diagCourante[i]);
         }
+        
+        System.out.println("!! iter= "+iter);
+        
+        
+        System.out.println("\ndiagPrecedent : ");
+        for (int i = 0 ; i <= size1 ; ++i){
+            System.out.print(diagPrecedente[i]);
+        }
+        System.out.println("\ndiagDerniere : ");
+        for (int i = 0 ; i <= size1 ; ++i){
+            System.out.print(diagDerniere[i]);
+        }*/
             //rotation des tableaux
             diagCourante = dd;
             diagPrecedente = dc;
             diagDerniere = dp;
             
-            try {
+            /*try {
                 sleep(200);
             } catch (InterruptedException ex) {
                 Logger.getLogger(Distance.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            }*/
         }
             
            
           /* System.out.println("\n\nDiagCourant : ");
         for (int i = 0 ; i <= size1 ; ++i){
-            System.out.println(diagCourante[i]);
+            System.out.print(diagCourante[i]);
         }
         System.out.println("\ndiagPrecedent : ");
         for (int i = 0 ; i <= size1 ; ++i){
-            System.out.println(diagPrecedente[i]);
+            System.out.print(diagPrecedente[i]);
         }
         System.out.println("\ndiagDerniere : ");
         for (int i = 0 ; i <= size1 ; ++i){
-            System.out.println(diagDerniere[i]);
+            System.out.print(diagDerniere[i]);
         }*/
         
         return diagPrecedente[0];
@@ -439,14 +452,16 @@ class Distance {
             System.out.println( (tempsFin - tempsDebut) / 1000.0 );
         }
         */
-        String s1 = "alpha";
-        String s2 = "blphaalpha";
+        String s2 = "alpha";
+        String s1 = "blphaalpha";
        
        int cost = distanceSeq_old(s1,s2);
         System.out.println("distanceSeq_old = " + cost);
         cost = distanceSeq(s1,s2);
-        System.out.println("distanceSeq = " + cost +"\n");
-        
+        System.out.println("distanceSeq = " + cost );
+        cost = distancePar1(s1,s2);
+        System.out.println("distancePar1 = " + cost +"\n");
+       
         
         s1 = "abc";
         s2 = "abc";
@@ -455,23 +470,29 @@ class Distance {
         cost = distanceSeq_old(s1,s2);
         System.out.println("distanceSeq_old = " + cost );
         cost = distanceSeq(s1,s2);
-        System.out.println("distanceSeq = " + cost +"\n");
-        
+        System.out.println("distanceSeq = " + cost );
+        cost = distancePar1(s1,s2);
+        System.out.println("distancePar1 = " + cost +"\n");
+       
         s2 = "chaton";
        s1 = "ckarolnyht";
 
         cost = distanceSeq_old(s1,s2);
         System.out.println("distanceSeq_old = " + cost );
         cost = distanceSeq(s1,s2);
-       System.out.println("distanceSeq = " + cost +"\n");
+        System.out.println("distanceSeq = " + cost );
+        cost = distancePar1(s1,s2);
+        System.out.println("distancePar1 = " + cost +"\n");
         
         s2 = "abc";
-        s1 = "aqccc";
+        s1 = "abcc";
 
        cost = distanceSeq_old(s1,s2);
         System.out.println("distanceSeq_old = " + cost );
         cost = distanceSeq(s1,s2);
-        System.out.println("distanceSeq = " + cost +"\n");
+        System.out.println("distanceSeq = " + cost );
+        cost = distancePar1(s1,s2);
+        System.out.println("distancePar1 = " + cost +"\n");
         
         
         
