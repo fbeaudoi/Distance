@@ -505,3 +505,6 @@ class Distance {
         
     }
 }
+
+
+// une différence
